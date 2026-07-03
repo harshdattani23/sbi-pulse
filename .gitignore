@@ -1,0 +1,5 @@
+.env
+.env.local
+.gemini.key
+node_modules/
+*.mp4

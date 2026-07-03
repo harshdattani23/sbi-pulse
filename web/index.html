@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SBI Pulse · Proactive Engagement · GFF 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12h3l2 6 4-14 2 8 2-4h5" />
+        </svg>
+      </div>
+      <div>
+        <h1>SBI Pulse</h1>
+        <p>Proactive engagement · journeys, not nudges</p>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="journey">Journey</button>
+      <button class="tab" data-view="cockpit">Engagement Cockpit</button>
+      <button class="tab" data-view="impact">Impact</button>
+      <button class="tab" data-view="studio">Journey Studio</button>
+      <button class="tab" data-view="flywheel">Flywheel</button>
+    </nav>
+
+    <div class="spacer"></div>
+    <button class="demo-btn" id="demo-btn">▶ Guided demo</button>
+    <span class="gff-badge">◈ Pillar 03 · Digital Engagement</span>
+  </header>
+
+  <div id="demo-overlay" class="demo-overlay hidden">
+    <div class="demo-cap"><span id="demo-cap"></span><span class="demo-skip" id="demo-skip">skip ✕</span></div>
+  </div>
+
+  <main>
+    <!-- ============================ JOURNEY VIEW ========================= -->
+    <section id="view-journey">
+      <div class="customer-grid">
+
+        <aside class="card card-pad">
+          <div class="section-title">Customers</div>
+          <div class="rail" id="rail"></div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="notch"></div>
+            <div class="screen">
+              <div class="yono-bar">
+                <div class="top"><span class="yono-logo">YONO · Pulse</span><span id="streak-slot"></span></div>
+                <div class="who" id="phone-who">—</div>
+                <div class="bal" id="phone-bal">₹0</div>
+                <div class="acct" id="phone-acct">•••• 0000 · Savings</div>
+              </div>
+              <div class="convo" id="convo"></div>
+              <div class="chatbar hidden" id="chatbar">
+                <input id="chat-input" placeholder="Type a reply…" autocomplete="off" />
+                <button id="chat-send" aria-label="send">➤</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reason">
+          <div class="card card-pad">
+            <div class="section-title">Why this journey</div>
+            <div class="jr-reason" id="jr-reason">—</div>
+            <div style="margin-top:16px" id="scores"></div>
+            <ul class="drivers" id="drivers"></ul>
+          </div>
+
+          <div class="card card-pad">
+            <div class="section-title">Governance</div>
+            <div id="governance"></div>
+            <div class="ctrl" style="margin-top:16px">
+              <label>Simulate time · <span class="val" id="hour-val">11:00</span> <span class="dim">(TRAI 9–21)</span></label>
+              <input type="range" id="hour" min="0" max="23" value="11" />
+            </div>
+            <button class="restart" id="restart" style="margin-top:16px">↻ Replay journey</button>
+          </div>
+
+          <div class="card card-pad ledger">
+            <div class="section-title">Explainability audit trail</div>
+            <div id="audit"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================ COCKPIT VIEW ========================= -->
+    <section id="view-cockpit" class="hidden">
+      <div class="ops">
+        <div class="metrics" id="metrics"></div>
+        <div class="card scale-banner" id="uplift-banner"></div>
+        <div class="ops-body">
+          <div class="card card-pad">
+            <div class="section-title">Churn / dormancy watch · who Pulse is engaging</div>
+            <table>
+              <thead><tr><th>Customer</th><th>Engagement</th><th>Churn risk</th><th>Dormancy</th><th>Active journey</th></tr></thead>
+              <tbody id="churn-body"></tbody>
+            </table>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">Journey mix</div>
+            <div class="mix" id="mix"></div>
+            <div class="section-title" style="margin-top:22px">Engagement distribution</div>
+            <div class="mix" id="bands"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ IMPACT VIEW ========================== -->
+    <section id="view-impact" class="hidden">
+      <div class="ops">
+        <div class="card scale-banner" id="impact-hero"></div>
+        <div class="metrics" id="impact-metrics"></div>
+        <div class="card card-pad">
+          <div class="section-title">Per-journey funnel &amp; uplift · treatment vs holdout</div>
+          <div class="impact-note">Every journey is measured against a randomised <strong>holdout</strong> that gets no proactive
+            engagement. We report <strong>incremental</strong> positive outcomes — uplift, not clicks. Deterministic synthetic cohort.</div>
+          <div id="impact-journeys" style="margin-top:18px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ STUDIO VIEW ========================== -->
+    <section id="view-studio" class="hidden">
+      <div class="ops">
+        <div class="studio-head">
+          <div>
+            <div class="section-title" style="margin:0">Journey Studio</div>
+            <p class="studio-sub">Compose &amp; govern engagement journeys — the state machines Pulse runs. Business users design; the guardrail engine enforces.</p>
+          </div>
+          <button class="restart" style="width:auto" disabled>+ New journey</button>
+        </div>
+        <div id="studio-list"></div>
+      </div>
+    </section>
+
+    <!-- ============================ FLYWHEEL VIEW ======================== -->
+    <section id="view-flywheel" class="hidden">
+      <div class="ops">
+        <div class="card scale-banner" id="fly-hero"></div>
+        <div class="metrics" id="fly-metrics"></div>
+        <div class="ops-body">
+          <div class="card card-pad">
+            <div class="studio-head" style="margin-bottom:8px">
+              <div class="section-title" style="margin:0">Learning curve · outcomes → policy</div>
+              <button class="restart" style="width:auto" id="fly-run">▶ Run 2,000 more interactions</button>
+            </div>
+            <div class="impact-note">A real <strong>Thompson-sampling bandit</strong> learns which message tone drives responses, per segment, from outcomes. Live journeys feed the same policy — so <strong>using the product trains it</strong>. The demo is reproducible; this compounding policy is the moat.</div>
+            <div id="fly-chart" style="margin-top:16px"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">Best tone learned per journey <span class="dim">(mass-affluent)</span></div>
+            <div id="fly-tones"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

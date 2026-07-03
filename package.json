@@ -1,0 +1,17 @@
+{
+  "name": "life-event-radar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Agentic AI that infers customer life events from consented financial behaviour and acts proactively — SBI GFF Hackathon 2026",
+  "scripts": {
+    "web": "node --env-file-if-exists=.env --experimental-strip-types src/server/server.ts",
+    "demo": "node --experimental-strip-types src/demo/runDemo.ts",
+    "demo:ravi": "node --experimental-strip-types src/demo/runDemo.ts ravi",
+    "demo:meena": "node --experimental-strip-types src/demo/runDemo.ts meena",
+    "list": "node --experimental-strip-types src/demo/runDemo.ts --list"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,266 @@
+<style>
+  :root{
+    --bg:#090d19; --bg2:#0d1426; --panel:#121a2e; --panel2:#172136;
+    --brd:#22304d; --brd2:#33436a;
+    --ink:#eaeefb; --muted:#939db8; --faint:#5f6b8c;
+    --brand:#3d6dff; --brand2:#7a97ff; --purple:#a879ff; --teal:#16d6c8;
+    --green:#2fd27a; --amber:#ffc03d; --red:#ff5d73;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{
+    font-family:var(--sans); color:var(--ink); line-height:1.6;
+    background:
+      radial-gradient(900px 500px at 12% -6%,rgba(61,109,255,.14),transparent 60%),
+      radial-gradient(800px 600px at 100% 0,rgba(168,121,255,.10),transparent 55%),
+      #090d19;
+    min-height:100vh; padding:0 0 90px;
+  }
+  .col{max-width:840px; margin:0 auto; padding:0 22px}
+
+  /* header */
+  header{position:sticky; top:0; z-index:5; backdrop-filter:blur(14px);
+    background:rgba(9,13,25,.82); border-bottom:1px solid var(--brd)}
+  .head{display:flex; align-items:center; gap:14px; padding:15px 22px; max-width:840px; margin:0 auto}
+  .mark{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;
+    background:linear-gradient(140deg,var(--brand),var(--purple));box-shadow:0 8px 22px -8px rgba(61,109,255,.6);font-size:19px}
+  .head h1{font-size:16px;margin:0;letter-spacing:-.01em;font-weight:700}
+  .head p{margin:1px 0 0;font-size:12px;color:var(--muted)}
+  .tag{margin-left:auto;font-size:11px;font-weight:600;color:var(--teal);
+    border:1px solid rgba(22,214,200,.32);background:rgba(22,214,200,.08);padding:5px 11px;border-radius:20px;white-space:nowrap}
+
+  .lede{margin:34px 0 8px}
+  .lede h2{font-size:29px;line-height:1.15;letter-spacing:-.025em;margin:0 0 10px;text-wrap:balance;font-weight:800}
+  .lede p{margin:0;color:var(--muted);font-size:15px;max-width:62ch}
+
+  /* artifacts overview */
+  .kit{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:22px 0 8px}
+  @media(max-width:560px){.kit{grid-template-columns:1fr}}
+  .kit .item{display:flex;gap:11px;align-items:flex-start;background:var(--panel);border:1px solid var(--brd);border-radius:12px;padding:12px 14px}
+  .kit .item .e{font-size:16px;line-height:1.4}
+  .kit .item b{font-size:13px}
+  .kit .item span{display:block;font-size:12px;color:var(--muted)}
+  code.f{font-family:var(--mono);font-size:12px;color:var(--brand2);background:rgba(61,109,255,.1);padding:1px 6px;border-radius:5px}
+
+  /* phases */
+  .phase{margin:40px 0 0; padding-top:26px; border-top:1px solid var(--brd)}
+  .phase>.h{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .num{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:600;font-size:15px;color:var(--brand2);
+    background:var(--panel2);border:1px solid var(--brd2)}
+  .phase h3{margin:0;font-size:20px;letter-spacing:-.02em;font-weight:700}
+  .phase .sub{color:var(--muted);font-size:13px;margin:2px 0 16px 48px}
+
+  .step{margin:0 0 14px 48px}
+  .step .t{font-weight:600;font-size:15px;margin-bottom:3px}
+  .step .d{color:var(--muted);font-size:14px}
+  ol.steps{margin:0 0 0 48px;padding:0;list-style:none;counter-reset:s}
+  ol.steps>li{counter-increment:s;position:relative;padding:0 0 15px 26px}
+  ol.steps>li::before{content:counter(s);position:absolute;left:0;top:0;font-family:var(--mono);font-size:12px;color:var(--faint);font-weight:600}
+  ol.steps>li b{font-weight:600}
+  ol.steps>li .d{color:var(--muted);font-size:13.5px}
+
+  pre{margin:11px 0;background:#070b15;border:1px solid var(--brd);border-radius:10px;
+    padding:13px 15px;overflow-x:auto}
+  pre code{font-family:var(--mono);font-size:12.5px;color:#cdd6ee;white-space:pre;line-height:1.65}
+  .cmt{color:var(--faint)}
+  .ok{color:var(--green)} .kw{color:var(--brand2)}
+
+  .call{display:flex;gap:11px;margin:13px 0 13px 48px;padding:12px 14px;border-radius:10px;font-size:13.5px;line-height:1.55}
+  .call .i{flex:none;font-size:15px}
+  .call.tip{background:rgba(47,210,122,.08);border:1px solid rgba(47,210,122,.28)}
+  .call.warn{background:rgba(255,93,115,.08);border:1px solid rgba(255,93,115,.3)}
+  .call.note{background:rgba(61,109,255,.08);border:1px solid rgba(61,109,255,.28)}
+  .call b{color:var(--ink)}
+  .call.warn b{color:var(--red)}
+
+  table{width:100%;border-collapse:collapse;margin:6px 0 4px 0;font-size:13px}
+  .tbl-wrap{margin-left:48px;overflow-x:auto}
+  th{text-align:left;color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;border-bottom:1px solid var(--brd)}
+  td{padding:10px 12px;border-bottom:1px solid var(--brd);color:var(--muted);vertical-align:top}
+  td b{color:var(--ink);font-weight:600}
+  td:first-child{white-space:nowrap}
+  .chip{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--brand2);background:rgba(61,109,255,.1);padding:2px 8px;border-radius:6px}
+
+  /* checklist */
+  ul.chk{margin:4px 0 0 48px;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px}
+  ul.chk li{display:flex;gap:11px;align-items:flex-start;padding:7px 0}
+  ul.chk input{appearance:none;-webkit-appearance:none;width:19px;height:19px;flex:none;margin-top:1px;
+    border:1.5px solid var(--brd2);border-radius:6px;background:var(--panel);cursor:pointer;position:relative;transition:.15s}
+  ul.chk input:checked{background:var(--green);border-color:var(--green)}
+  ul.chk input:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#052;font-size:12px;font-weight:800}
+  ul.chk input:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  ul.chk label{font-size:14px;cursor:pointer}
+  ul.chk input:checked + label{color:var(--faint);text-decoration:line-through}
+
+  .blurb{margin:6px 0 0 48px;background:var(--panel);border:1px solid var(--brd);border-radius:12px;padding:16px 18px}
+  .blurb .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:600;margin-bottom:8px}
+  .blurb p{margin:0 0 10px;font-size:13.5px;color:#cdd6ee;line-height:1.62}
+  .blurb p:last-child{margin-bottom:0}
+
+  a{color:var(--brand2);text-decoration:none;border-bottom:1px solid rgba(122,151,255,.3)}
+  a:hover{border-color:var(--brand2)}
+  kbd{font-family:var(--mono);font-size:11px;background:var(--panel2);border:1px solid var(--brd2);border-radius:5px;padding:1px 6px}
+  footer{margin:48px auto 0;max-width:840px;padding:24px 22px 0;border-top:1px solid var(--brd);color:var(--faint);font-size:12.5px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="head">
+      <div class="mark">🎬</div>
+      <div>
+        <h1>SBI Pulse — Submission &amp; Video Runbook</h1>
+        <p>Everything to reproduce, demo, record, and submit</p>
+      </div>
+      <span class="tag">◈ Pillar 03 · Digital Engagement</span>
+    </div>
+  </header>
+
+  <div class="col">
+    <div class="lede">
+      <h2>Follow these seven phases end to end.</h2>
+      <p>Steps 1–3 get it running on any machine. Step 4 is the demo you'll narrate. Steps 5–7 record and package the submission. Tick the boxes as you go.</p>
+    </div>
+
+    <div class="kit">
+      <div class="item"><span class="e">🖥️</span><div><b>The app</b><span><code class="f">npm run web</code> → localhost:5173 · 5 tabs</span></div></div>
+      <div class="item"><span class="e">🎞️</span><div><b>The deck</b><span><code class="f">/deck.html</code> · 12 slides, arrow keys</span></div></div>
+      <div class="item"><span class="e">🗒️</span><div><b>The pitch script</b><span><code class="f">PITCH.md</code> · timed 3-min narration</span></div></div>
+      <div class="item"><span class="e">📐</span><div><b>The plan</b><span><code class="f">PILLAR3_DIGITAL_ENGAGEMENT_PLAN.md</code></span></div></div>
+    </div>
+
+    <!-- PHASE 1 -->
+    <section class="phase">
+      <div class="h"><div class="num">1</div><h3>Prerequisites</h3></div>
+      <div class="sub">One tool. No package install — the project is zero-dependency and runs TypeScript natively.</div>
+      <ol class="steps">
+        <li><b>Install Node 22 or newer.</b> <div class="d">Check what you have; if it's missing or old, install it.</div>
+          <pre><code>node --version            <span class="cmt"># need v22+ (v25 is fine)</span>
+<span class="cmt"># if missing, on macOS:</span>
+brew install node</code></pre>
+        </li>
+        <li><b>Get the project folder.</b> <div class="d">Everything lives in the <code class="f">sbi</code> directory. Open a terminal there.</div>
+          <pre><code>cd path/to/sbi</code></pre>
+        </li>
+      </ol>
+      <div class="call note"><span class="i">ℹ️</span><div>No <code class="f">npm install</code> is needed — there are no dependencies. Node executes the TypeScript directly via <code class="f">--experimental-strip-types</code>, already wired into the npm scripts.</div></div>
+    </section>
+
+    <!-- PHASE 2 -->
+    <section class="phase">
+      <div class="h"><div class="num">2</div><h3>Add your Gemini key</h3></div>
+      <div class="sub">The reasoning + conversation run on Google Gemini. The key is read only from a git-ignored <code class="f">.env</code> file.</div>
+      <ol class="steps">
+        <li><b>Create a fresh API key.</b> <div class="d">Go to <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a>, sign in, and create a key (free tier is plenty). Model used: <span class="chip">gemini-3.1-flash-lite-preview</span></div></li>
+        <li><b>Put it in <code class="f">.env</code>.</b>
+          <pre><code>echo "GEMINI_API_KEY=your-fresh-key-here" &gt; .env</code></pre>
+        </li>
+      </ol>
+      <div class="call warn"><span class="i">🔑</span><div><b>Rotate the old key.</b> The key used during development was shared in chat — treat it as compromised. Delete it in AI Studio and use a new one for the recording.</div></div>
+      <div class="call tip"><span class="i">✅</span><div>No key? The app still runs — it falls back to the deterministic rule engine (the AI badge just won't show). For the video, make sure the key works so the real Gemini reasoning is on.</div></div>
+    </section>
+
+    <!-- PHASE 3 -->
+    <section class="phase">
+      <div class="h"><div class="num">3</div><h3>Run &amp; verify</h3></div>
+      <div class="sub">Start the server and confirm all five views load and the AI is live.</div>
+      <ol class="steps">
+        <li><b>Start it.</b>
+          <pre><code>npm run web
+<span class="cmt"># →  🫀  SBI Pulse → http://localhost:5173</span></code></pre>
+        </li>
+        <li><b>Open the app</b> at <a href="http://localhost:5173">localhost:5173</a> and walk each tab. Confirm the checklist:</li>
+      </ol>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Tab</th><th>What proves it works</th></tr></thead>
+        <tbody>
+          <tr><td><b>Journey</b></td><td>Pick a customer → an <b>“✨ Reasoned by Gemini”</b> badge, an inferred <i>situation</i>, and a vernacular message. Type a reply into the phone — it answers live.</td></tr>
+          <tr><td><b>Cockpit</b></td><td>Engagement / churn / dormancy scores, journey mix, delivered-vs-suppressed.</td></tr>
+          <tr><td><b>Impact</b></td><td>Treatment-vs-holdout uplift (<b>+20pp</b>) and per-journey funnels.</td></tr>
+          <tr><td><b>Journey Studio</b></td><td>Every journey as a state machine (trigger → steps → branches).</td></tr>
+          <tr><td><b>Flywheel</b></td><td>Learning curve; <b>Run 2,000 more</b> makes the blue line climb toward the ceiling.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="call tip"><span class="i">⚡</span><div><b>Warm it up before recording.</b> Click each persona once — the first Gemini call for each takes ~1.5s; after that it's snappy.</div></div>
+    </section>
+
+    <!-- PHASE 4 -->
+    <section class="phase">
+      <div class="h"><div class="num">4</div><h3>The demo — what to show &amp; say</h3></div>
+      <div class="sub">≈3 minutes. This is the spine of the video. Narrate each beat in your own words.</div>
+      <ol class="steps">
+        <li><b>Frame it (15s).</b> <div class="d">Open the <b>deck</b> at <a href="http://localhost:5173/deck.html">/deck.html</a> (<kbd>F</kbd> fullscreen, <kbd>→</kbd> to advance). Slides 1–3: the problem (34% dormant, 2.3 products/customer) and the thesis — <i>“journeys, not nudges.”</i></div></li>
+        <li><b>Real AI + restraint (45s).</b> <div class="d">Switch to the app → <b>Journey</b> tab → click <b>Meena</b>. Say: “Gemini read her <i>actual</i> transactions.” Point to the inferred situation and the audit trail (<span class="chip">observe → infer → decide → gate → deliver</span>). It detected stress, <b>chose care over a sale</b>, and wrote the message in <b>Hindi</b>.</div></li>
+        <li><b>It's a real conversation (25s).</b> <div class="d">Type a reply into the phone (e.g. <i>“yes please help me”</i>). It responds live, in her language — not fixed buttons.</div></li>
+        <li><b>It adapts (25s).</b> <div class="d">Click <b>Neha</b> (a raise → First SIP). Reply <i>“not now.”</i> Show it doesn't nag — it eases off. Point to the scores panel on the right.</div></li>
+        <li><b>Proof, not vibes (25s).</b> <div class="d"><b>Impact</b> tab: “+20pp uplift versus a randomised holdout — measured on outcomes, not clicks.”</div></li>
+        <li><b>The moat (30s).</b> <div class="d"><b>Flywheel</b> tab: “A learning policy that improves from every outcome — and the live journeys feed it.” Click <b>Run 2,000 more</b> twice; watch the blue line chase the ceiling.</div></li>
+        <li><b>Platform + close (15s).</b> <div class="d"><b>Journey Studio</b> tab: “every journey is a governed, no-code state machine.” Close on the four differentiators (below).</div></li>
+      </ol>
+      <div class="call note"><span class="i">▶</span><div><b>Hands-free option:</b> the top-bar <b>Guided demo</b> button auto-walks the hero beats with captions — great as a backup take or if you'd rather not click live.</div></div>
+      <div class="call tip"><span class="i">🎯</span><div><b>The four lines to land:</b> journeys not nudges · knows when <i>not</i> to sell · consent + explainable by design · learns from every outcome (the moat).</div></div>
+    </section>
+
+    <!-- PHASE 5 -->
+    <section class="phase">
+      <div class="h"><div class="num">5</div><h3>Record the video (macOS)</h3></div>
+      <div class="sub">Clean screen, narrated, under the time limit. Two takes.</div>
+      <ol class="steps">
+        <li><b>Prep the stage.</b> <div class="d">Turn on Do&nbsp;Not&nbsp;Disturb, hide the browser bookmark bar, close other tabs, tidy the desktop, browser to fullscreen (<kbd>⌃⌘F</kbd>).</div></li>
+        <li><b>Start recording.</b> <div class="d">Press <kbd>⇧⌘5</kbd> → choose <i>Record Entire Screen</i> (or a window) → enable your <b>microphone</b> for narration → Record. (QuickTime → <i>New Screen Recording</i> works too.)</div></li>
+        <li><b>Run the Phase 4 script.</b> <div class="d">Speak steadily; don't rush the Meena/restraint beat — it's the memorable one.</div></li>
+        <li><b>Do a second take</b> and also capture one <b>Guided demo</b> run as an automated fallback.</div></li>
+        <li><b>Trim &amp; export.</b> <div class="d">Trim in QuickTime (<kbd>⌘T</kbd>) or iMovie; export at <b>1080p</b>. Aim for the hackathon's limit (typically 3–5 min).</div></li>
+        <li><b>Upload &amp; get a link.</b> <div class="d">YouTube (Unlisted) or Google Drive (link-sharing on). Test the link in a private window.</div></li>
+      </ol>
+    </section>
+
+    <!-- PHASE 6 -->
+    <section class="phase">
+      <div class="h"><div class="num">6</div><h3>Assemble the submission</h3></div>
+      <div class="sub">What most hackathon forms ask for, and what to hand over.</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Item</th><th>How to produce it</th></tr></thead>
+        <tbody>
+          <tr><td><b>Demo video</b></td><td>The link from Phase 5.</td></tr>
+          <tr><td><b>Pitch deck</b></td><td>Open <code class="f">/deck.html</code>, browser <b>Print → Save as PDF</b> (or screenshot each of the 12 slides).</td></tr>
+          <tr><td><b>Code</b></td><td>Zip the <code class="f">sbi</code> folder <b>excluding <code class="f">.env</code> and <code class="f">node_modules</code></b> — keep <code class="f">.env.example</code>. Or push to a private GitHub repo.</td></tr>
+          <tr><td><b>Solution summary</b></td><td>Paste the blurb below.</td></tr>
+          <tr><td><b>Tech stack</b></td><td>TypeScript on Node (zero-dependency, native TS) · Google Gemini 3.1 Flash Lite · India-stack aligned (DPDP / TRAI / Account Aggregator) · hand-built web UI.</td></tr>
+          <tr><td><b>Pillar</b></td><td>03 — Digital Engagement (Agentic AI &amp; Emerging Tech).</td></tr>
+        </tbody>
+      </table></div>
+      <div class="blurb">
+        <div class="lbl">Copy-paste solution summary</div>
+        <p><b>SBI Pulse</b> is an agentic AI engagement platform for Pillar 3. It senses each customer's behaviours, financial patterns and life events, and runs proactive, adaptive engagement <b>journeys — not one-off nudges</b>.</p>
+        <p>A live <b>Gemini</b> agent reads the actual transaction stream, infers the situation, decides the best journey (or to stay silent), and holds a free-text conversation in the customer's language (Hindi / Odia / English). A <b>deterministic guardrail layer</b> enforces DPDP consent, the TRAI contact window and frequency caps — the LLM proposes, policy disposes — and every decision is logged in an explainability audit trail. On detected financial stress it <b>suppresses cross-sell and offers care</b>.</p>
+        <p>A <b>Thompson-sampling learning policy</b> improves message-tone selection from real outcomes, and the live journeys feed it — so the product gets better with use. Impact is measured as <b>uplift against a randomised holdout (+20pp)</b>, not clicks.</p>
+      </div>
+    </section>
+
+    <!-- PHASE 7 -->
+    <section class="phase">
+      <div class="h"><div class="num">7</div><h3>Pre-flight checklist</h3></div>
+      <div class="sub">Tick these right before you hit record.</div>
+      <ul class="chk">
+        <li><input type="checkbox" id="c1"><label for="c1">Old Gemini key rotated; fresh key in <code class="f">.env</code></label></li>
+        <li><input type="checkbox" id="c2"><label for="c2">Server restarted (<code class="f">npm run web</code>) and reachable at localhost:5173</label></li>
+        <li><input type="checkbox" id="c3"><label for="c3">Internet on — Gemini needs network; verified the “✨ Reasoned by Gemini” badge appears</label></li>
+        <li><input type="checkbox" id="c4"><label for="c4">Warmed up each persona once (first-call latency absorbed)</label></li>
+        <li><input type="checkbox" id="c5"><label for="c5">Browser fullscreen, bookmarks hidden, Do&nbsp;Not&nbsp;Disturb on, desktop clean</label></li>
+        <li><input type="checkbox" id="c6"><label for="c6">Deck opens at <code class="f">/deck.html</code>; arrow keys + <kbd>F</kbd> work</label></li>
+        <li><input type="checkbox" id="c7"><label for="c7">Flywheel “Run 2,000 more” tested (line climbs)</label></li>
+        <li><input type="checkbox" id="c8"><label for="c8">Backup take + one Guided-demo recording captured</label></li>
+        <li><input type="checkbox" id="c9"><label for="c9">Video uploaded; link tested in a private window</label></li>
+        <li><input type="checkbox" id="c10"><label for="c10">Code zipped without <code class="f">.env</code> / <code class="f">node_modules</code>; deck exported to PDF</label></li>
+      </ul>
+      <div class="call warn"><span class="i">⚖️</span><div><b>Be honest on camera — it builds trust.</b> Say the data is synthetic (no PII), the Impact number is a labelled simulation, and the Flywheel's learning mechanism is real and fed by live outcomes. Judges respect the candour.</div></div>
+    </section>
+
+    <footer>
+      SBI Pulse · GFF 2026 · Pillar 03 Digital Engagement — reproduce · demo · record · submit.
+    </footer>
+  </div>
+</div>

@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+*.mp4
+*.pdf
+*.md
+docs/
+node_modules/
+.git/

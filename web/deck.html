@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SBI Pulse · Pitch · GFF 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#080b16; --panel:rgba(255,255,255,.04); --brd:rgba(255,255,255,.1); --brd2:rgba(255,255,255,.18);
+  --txt:#eaeefb; --muted:#8a93ad; --faint:#5a6483;
+  --brand:#3d6dff; --brand2:#6f92ff; --teal:#16d6c8; --green:#2fd27a; --amber:#ffc03d; --red:#ff5d73; --purple:#a879ff;
+  --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);color:var(--txt);letter-spacing:-.015em;
+  background:radial-gradient(1200px 700px at 15% -10%,rgba(61,109,255,.18),transparent 60%),
+    radial-gradient(1100px 800px at 100% 0,rgba(168,121,255,.14),transparent 55%),
+    radial-gradient(900px 700px at 50% 120%,rgba(22,214,200,.09),transparent 60%),var(--bg);
+  -webkit-font-smoothing:antialiased}
+.deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+  padding:7vh 9vw;opacity:0;transition:opacity .4s ease}
+.slide.on{display:flex;opacity:1;animation:sin .5s ease}
+@keyframes sin{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--brand2);margin-bottom:20px}
+.kicker.teal{color:var(--teal)} .kicker.amber{color:var(--amber)}
+h1{font-size:clamp(38px,6vw,82px);font-weight:900;line-height:1.02;letter-spacing:-.03em}
+h2{font-size:clamp(30px,4.4vw,58px);font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-bottom:10px}
+.sub{font-size:clamp(16px,1.7vw,23px);color:var(--muted);margin-top:22px;max-width:900px;line-height:1.5}
+.grad{background:linear-gradient(100deg,var(--brand2),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.grad-p{background:linear-gradient(100deg,var(--purple),var(--brand2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.row{display:flex;gap:20px;flex-wrap:wrap;margin-top:38px}
+.card{background:var(--panel);border:1px solid var(--brd);border-radius:18px;padding:24px 26px;flex:1;min-width:200px}
+.card .n{font-size:clamp(30px,3.6vw,46px);font-weight:900;letter-spacing:-.03em}
+.card .n.g{color:var(--green)} .card .n.a{color:var(--amber)} .card .n.b{color:var(--brand2)} .card .n.t{color:var(--teal)}
+.card .l{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.45}
+.big-stat{font-size:clamp(60px,11vw,150px);font-weight:900;letter-spacing:-.04em;line-height:.9}
+.bullets{margin-top:30px;display:flex;flex-direction:column;gap:16px;max-width:920px}
+.bullet{display:flex;gap:15px;align-items:flex-start;font-size:clamp(16px,1.8vw,22px);line-height:1.4}
+.bullet .ic{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:16px;
+  background:linear-gradient(140deg,var(--brand),var(--purple));margin-top:2px}
+.bullet b{color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:34px;align-items:start}
+.pill{display:inline-block;font-size:12px;font-weight:700;color:var(--teal);border:1px solid rgba(22,214,200,.3);
+  background:rgba(22,214,200,.08);padding:6px 14px;border-radius:20px}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:34px}
+.node{background:var(--panel);border:1px solid var(--brd2);border-radius:12px;padding:12px 16px;font-weight:700;font-size:clamp(13px,1.4vw,17px)}
+.node small{display:block;color:var(--muted);font-weight:500;font-size:12px;margin-top:3px}
+.arr{color:var(--teal);font-size:20px}
+.logo{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;margin-bottom:34px;
+  background:linear-gradient(140deg,var(--brand),var(--purple));box-shadow:0 12px 34px -8px rgba(61,109,255,.6)}
+.logo svg{width:34px;height:34px}
+.foot{position:absolute;left:9vw;bottom:5vh;font-size:13px;color:var(--faint);display:flex;gap:14px;align-items:center}
+.tag{font-size:clamp(15px,1.6vw,20px);color:var(--muted)}
+.jchip{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--brd);border-radius:12px;padding:10px 14px;font-weight:600;font-size:15px}
+.up{color:var(--green);font-weight:800}
+/* nav */
+.nav{position:fixed;bottom:22px;right:26px;display:flex;align-items:center;gap:14px;z-index:20}
+.dots{display:flex;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.16);cursor:pointer;transition:.2s}
+.dot.on{background:var(--brand2);width:22px;border-radius:5px}
+.count{font-family:var(--mono);font-size:12px;color:var(--faint)}
+.progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--brand),var(--teal));transition:width .4s;z-index:20}
+.hint{position:fixed;bottom:22px;left:26px;font-size:12px;color:var(--faint)}
+kbd{font-family:var(--mono);background:var(--panel);border:1px solid var(--brd);border-radius:5px;padding:1px 6px;font-size:11px}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 · Title -->
+  <section class="slide">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2 6 4-14 2 8 2-4h5"/></svg></div>
+    <div class="kicker">SBI · Global Fintech Fest 2026 · Pillar 03 — Digital Engagement</div>
+    <h1>SBI <span class="grad">Pulse</span></h1>
+    <div class="sub">An agentic AI that senses <b style="color:#fff">behaviours, financial patterns & life events</b> — and runs proactive, adaptive engagement <b style="color:#fff">journeys, not nudges</b>.</div>
+    <div class="foot">Proactive · Vernacular · Consent-native · Explainable</div>
+  </section>
+
+  <!-- 2 · Problem -->
+  <section class="slide">
+    <div class="kicker amber">The problem</div>
+    <h2>SBI's biggest untapped asset isn't new customers.<br>It's the <span class="grad">under-engaged ones it already has.</span></h2>
+    <div class="row">
+      <div class="card"><div class="n a">34%</div><div class="l">of new accounts go <b>dormant within a year</b></div></div>
+      <div class="card"><div class="n a">2.3</div><div class="l">products per customer — cross-sell is <b>stuck</b></div></div>
+      <div class="card"><div class="n b">5–7×</div><div class="l">cheaper to <b>retain</b> than to acquire</div></div>
+      <div class="card"><div class="n b">~100M</div><div class="l">YONO users — most talked to like a <b>billboard</b></div></div>
+    </div>
+    <div class="sub">Banks blast one-size nudges. Engagement stays shallow, trust stays thin.</div>
+  </section>
+
+  <!-- 3 · Insight -->
+  <section class="slide">
+    <div class="kicker teal">The insight</div>
+    <h2>Stop sending nudges.<br><span class="grad">Run journeys.</span></h2>
+    <div class="bullets">
+      <div class="bullet"><span class="ic">🎯</span><div><b>Anticipatory</b> — meet the need <b>before</b> it's expressed, from real signals.</div></div>
+      <div class="bullet"><span class="ic">🧠</span><div><b>Agentic at the journey level</b> — multi-step, adapts in real time to how the customer replies. <span style="color:var(--muted)">(Gartner: journey-orchestrating banks outperform up to 35% by 2026.)</span></div></div>
+      <div class="bullet"><span class="ic">🫶</span><div><b>Wellness-first</b> — the trusted framing that builds engagement <i>and</i> goodwill.</div></div>
+    </div>
+  </section>
+
+  <!-- 4 · Product -->
+  <section class="slide">
+    <div class="kicker">The product · one brain, three engines</div>
+    <h2>SBI <span class="grad">Pulse</span></h2>
+    <div class="two">
+      <div class="card"><div class="n b" style="font-size:26px">① Anticipatory</div><div class="l">Life events + pattern shifts + dormancy → <b>what changed in this life?</b><br><span style="color:var(--faint)">↳ behaviours · financial patterns · life events</span></div></div>
+      <div class="card"><div class="n t" style="font-size:26px">② Financial-Wellness</div><div class="l">Spend/save coaching, distress support, gamified habits → <b>how do we help, not sell?</b><br><span style="color:var(--faint)">↳ intelligent financial interactions</span></div></div>
+    </div>
+    <div class="row" style="margin-top:22px">
+      <div class="card"><div class="n" style="font-size:26px;color:var(--purple)">③ Journey Orchestrator</div><div class="l">Which journey · which step · which channel · which moment — or <b>silence</b>. <span style="color:var(--faint)">↳ AI-led banking journeys + personalised engagement</span></div></div>
+    </div>
+  </section>
+
+  <!-- 5 · How it works -->
+  <section class="slide">
+    <div class="kicker">How it works</div>
+    <h2>Observe → Infer → Decide → <span class="grad-p">Gate</span> → Act → Learn</h2>
+    <div class="flow">
+      <div class="node">Signals<small>txns · patterns · life events</small></div><span class="arr">→</span>
+      <div class="node">Engagement Brain<small>scores · next-best-engagement</small></div><span class="arr">→</span>
+      <div class="node">Journey Orchestrator<small>adaptive state machine</small></div><span class="arr">→</span>
+      <div class="node" style="border-color:var(--amber)">Guardrail Gate<small>deterministic · consent · TRAI</small></div><span class="arr">→</span>
+      <div class="node" style="border-color:var(--green)">Deliver<small>YONO · WhatsApp · vernacular</small></div>
+    </div>
+    <div class="sub">The LLM <b>proposes</b>. Deterministic policy <b>disposes</b>. Every action is logged with its consent basis and a human-readable “why”.</div>
+  </section>
+
+  <!-- 6 · Demo -->
+  <section class="slide" style="justify-content:center;align-items:flex-start">
+    <div class="kicker teal">Live demo</div>
+    <h1 style="font-size:clamp(34px,5vw,68px)">Watch it <span class="grad">adapt.</span></h1>
+    <div class="bullets">
+      <div class="bullet"><span class="ic">🌿</span><div>Neha says <b>“Not now”</b> → the journey <b>branches</b> to a gentler ₹100 start. A nudge would nag.</div></div>
+      <div class="bullet"><span class="ic">🛡️</span><div>Meena is in stress → Pulse <b>suppresses the sale</b> and leads with care — in <b>Hindi</b>.</div></div>
+      <div class="bullet"><span class="ic">🔥</span><div>Gita, silent 6 months → a one-tap <b>revival</b> journey, in her language.</div></div>
+    </div>
+    <div class="sub" style="color:var(--faint)">▶ localhost:5173 · press “Guided demo”</div>
+  </section>
+
+  <!-- 7 · Differentiators -->
+  <section class="slide">
+    <div class="kicker">Why it wins</div>
+    <h2>Four things most teams <span class="grad">won't</span> do</h2>
+    <div class="two">
+      <div class="card"><div class="n b" style="font-size:22px">🔀 Journeys, not nudges</div><div class="l">Agentic, multi-step, branches on reply — not a one-shot message.</div></div>
+      <div class="card"><div class="n t" style="font-size:22px">🫶 Knows when <i>not</i> to sell</div><div class="l">Distress → care, cross-sell suppressed. Trust at 500M scale.</div></div>
+      <div class="card"><div class="n g" style="font-size:22px">🔒 Consent + explainable</div><div class="l">DPDP · TRAI window · full audit trail. Compliance as a feature.</div></div>
+      <div class="card"><div class="n a" style="font-size:22px">🗣️ Vernacular</div><div class="l">Hindi, Odia & more — built for <i>India's</i> next 400M.</div></div>
+    </div>
+  </section>
+
+  <!-- 8 · Proof / Impact -->
+  <section class="slide">
+    <div class="kicker teal">Proof · measured on uplift, not clicks</div>
+    <h2>vs. a randomised <span class="grad">holdout</span></h2>
+    <div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap;margin-top:20px">
+      <div><div class="big-stat grad">+20<span style="font-size:.4em">pp</span></div><div class="tag">absolute uplift in positive outcomes · <b style="color:var(--green)">+334%</b> relative</div></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="jchip">🛡️ Stress Shield <span class="up">+30pp</span></div>
+        <div class="jchip">👶 New-Baby Nest <span class="up">+28pp</span></div>
+        <div class="jchip">📈 First SIP <span class="up">+24pp</span></div>
+        <div class="jchip">🧭 Overspend Rescue <span class="up">+15pp</span></div>
+      </div>
+    </div>
+    <div class="sub">1,500-customer cohort · 80/20 treatment-vs-holdout · deterministic. Engagement isn't judged on clicks — it's judged on <b>incremental behaviour change</b>.</div>
+  </section>
+
+  <!-- 9 · Responsible AI -->
+  <section class="slide">
+    <div class="kicker amber">Responsible by design</div>
+    <h2>The compliance <span class="grad">moat</span></h2>
+    <div class="bullets">
+      <div class="bullet"><span class="ic">⚖️</span><div><b>Deterministic guardrail engine</b> — not the LLM. An auditor can read exactly when a customer is contacted.</div></div>
+      <div class="bullet"><span class="ic">📜</span><div><b>Consent-native</b> (DPDP 2023) · <b>TRAI</b> 9–9 window · frequency caps · one-tap opt-out.</div></div>
+      <div class="bullet"><span class="ic">🔍</span><div><b>Explainability audit trail</b> on every decision · human-in-the-loop for high-value.</div></div>
+      <div class="bullet"><span class="ic">📈</span><div>Optimised on <b>uplift, not clicks</b> — the anti-dark-pattern guarantee, quantified.</div></div>
+    </div>
+  </section>
+
+  <!-- 10 · Business case -->
+  <section class="slide">
+    <div class="kicker">Business case · SBI's own KPIs</div>
+    <h2>Engagement is the highest-<span class="grad">ROI</span> lever SBI has</h2>
+    <div class="row">
+      <div class="card"><div class="n g">15–25%</div><div class="l">projected <b>churn reduction</b> from proactive engagement</div></div>
+      <div class="card"><div class="n b">34% → ↓</div><div class="l">reactivate <b>dormant</b> accounts with revival journeys</div></div>
+      <div class="card"><div class="n t">2.3 → ↑</div><div class="l">lift <b>products per customer</b> with timed, helpful journeys</div></div>
+      <div class="card"><div class="n a">Trust</div><div class="l">wellness-first goodwill at <b>500M</b> scale</div></div>
+    </div>
+    <div class="sub">Rides YONO 2.0's stated gamification + hyper-personalisation — SBI's own roadmap, not a detour.</div>
+  </section>
+
+  <!-- 11 · Roadmap -->
+  <section class="slide">
+    <div class="kicker">Roadmap</div>
+    <h2>From <span class="grad">demo</span> to platform</h2>
+    <div class="row">
+      <div class="card"><div class="pill">Phase 0 · now</div><div class="l" style="margin-top:14px"><b>Working MVP</b> — 5 journeys, live branching, scores, guardrails, vernacular, audit, impact.</div></div>
+      <div class="card"><div class="pill">Phase 1 · 1–3 mo</div><div class="l" style="margin-top:14px"><b>Pilot</b> — AA + YONO events, holdout uplift on a real cohort, human-in-loop.</div></div>
+      <div class="card"><div class="pill">Phase 2 · 3–9 mo</div><div class="l" style="margin-top:14px"><b>Rollout</b> — IVR + push, 10–15 journeys, gamification, Bhashini, DLT compliance.</div></div>
+      <div class="card"><div class="pill">Phase 3 · 9–24 mo</div><div class="l" style="margin-top:14px"><b>Platform</b> — Journey Studio, RM cockpit, edge/offline, all 22 languages.</div></div>
+    </div>
+  </section>
+
+  <!-- 12 · Close -->
+  <section class="slide" style="justify-content:center">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2 6 4-14 2 8 2-4h5"/></svg></div>
+    <h1>SBI <span class="grad">Pulse</span></h1>
+    <div class="sub" style="font-size:clamp(18px,2vw,26px);color:var(--txt)">Journeys, not nudges. Knows when not to sell.<br>Consent &amp; explainability by design. Built for India's next 400M.</div>
+    <div class="foot">Pillar 03 · Digital Engagement · Agentic AI &amp; Emerging Tech</div>
+  </section>
+
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>F</kbd> fullscreen</div>
+<div class="nav"><div class="dots" id="dots"></div><span class="count" id="count"></span></div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+let i=0;
+const dots=document.getElementById('dots');
+slides.forEach((_,k)=>{const d=document.createElement('div');d.className='dot';d.onclick=()=>go(k);dots.appendChild(d);});
+function go(n){i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+  [...dots.children].forEach((d,k)=>d.classList.toggle('on',k===i));
+  document.getElementById('count').textContent=(i+1)+' / '+slides.length;
+  document.getElementById('progress').style.width=((i+1)/slides.length*100)+'%';}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(i+1);
+  else if(e.key==='ArrowLeft'||e.key==='PageUp')go(i-1);
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(slides.length-1);
+  else if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}});
+document.addEventListener('click',e=>{if(e.target.closest('.nav')||e.target.closest('.hint'))return;go(i+1);});
+go(0);
+</script>
+</body>
+</html>
