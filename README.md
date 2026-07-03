@@ -31,7 +31,7 @@ SBI has ~100M digital users — but **34% of new accounts go dormant within a ye
 
 ## The answer: stop sending nudges. Run journeys.
 
-A **nudge** is one message. A **journey** is an adaptive, multi-step conversation the agent runs over time, branching on every reply:
+A **nudge** is one message. A **journey** is an adaptive, multi-step conversation the agent runs over time, branching on every reply. Pulse is an **orchestrated multi-agent pipeline** — a signal engine, an LLM reasoning agent, a deterministic governance gate, a conversational orchestrator, and a learning policy, each with a single job:
 
 | | |
 |---|---|
