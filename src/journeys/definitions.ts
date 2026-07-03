@@ -206,6 +206,54 @@ export const JOURNEYS: Record<string, JourneyDef> = {
     },
   },
 
+  // -------------------------------------------------------------- Debt-Free Plan
+  debt_free: {
+    id: "debt_free",
+    name: "Debt-Free Plan",
+    emoji: "🏔️",
+    goal: "A clear path out of EMIs — Snowball or Avalanche",
+    startStep: "insight",
+    steps: {
+      insight: {
+        id: "insight", kind: "insight", channel: "whatsapp",
+        title: "A faster way out of EMIs 🏔️",
+        body: "Hi {name}, your EMIs take a big bite every month. With a small strategy change you could be debt-free sooner — want to see how?",
+        options: [
+          { label: "Show me the plan", choice: "plan", next: "strategy" },
+          { label: "Not now", choice: "later", next: "later" },
+        ],
+      },
+      strategy: {
+        id: "strategy", kind: "offer", channel: "yono_card",
+        title: "Two proven strategies",
+        body: "**Snowball**: clear the smallest loan first — quick wins, momentum. **Avalanche**: attack the highest-interest loan — least total interest. I can set either up as your monthly plan.",
+        options: [
+          { label: "Avalanche (save most)", choice: "avalanche", next: "set" },
+          { label: "Snowball (quick wins)", choice: "snowball", next: "set" },
+          { label: "Talk to someone", choice: "rm", next: "rm" },
+        ],
+      },
+      set: {
+        id: "set", kind: "celebrate", channel: "yono_card",
+        title: "Plan locked in 🎯",
+        body: "Your repayment plan is set. I'll track it monthly and tell you the moment a prepayment makes sense.",
+        options: [], effect: "debt_plan_set",
+      },
+      rm: {
+        id: "rm", kind: "care", channel: "yono_card",
+        title: "Let's plan together",
+        body: "I'll connect you with a relationship manager to restructure this properly — no cost to talk.",
+        options: [], effect: "rm_handoff",
+      },
+      later: {
+        id: "later", kind: "close", channel: "whatsapp",
+        title: "Anytime 👍",
+        body: "The plan will be ready whenever you are.",
+        options: [], effect: "declined",
+      },
+    },
+  },
+
   // ------------------------------------------------------------- New-Baby Nest
   new_baby_nest: {
     id: "new_baby_nest",

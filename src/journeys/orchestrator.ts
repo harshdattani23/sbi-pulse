@@ -16,6 +16,14 @@ import { translate } from "./i18n.ts";
 
 const firstName = (name: string) => name.split(/[ &]/)[0];
 
+/** Heavy recurring EMI load relative to income (but not distress — that routes to care). */
+function debtBurden(customer: Customer): boolean {
+  const txns = customer.transactions;
+  const emi = txns.filter((t) => t.direction === "debit" && t.category === "emi").reduce((s, t) => s + t.amount, 0);
+  const income = txns.filter((t) => t.direction === "credit" && (t.category === "salary" || t.category === "pension")).reduce((s, t) => s + t.amount, 0);
+  return income > 0 && emi / income > 0.25;
+}
+
 export interface Selection {
   journeyId: string;
   reason: string;
@@ -40,6 +48,8 @@ export function selectJourney(customer: Customer): { selection: Selection | null
     selection = { journeyId: "new_baby_nest", reason: "A new child in the family — plan-early journey.", facts: {} };
   } else if (over.detected) {
     selection = { journeyId: "overspend_rescue", reason: `Lifestyle spend up ${over.growthPct}% (${over.sharePct}% of outflow).`, facts: { growth: over.growthPct } };
+  } else if (debtBurden(customer) && scores.financialHealth >= 40) {
+    selection = { journeyId: "debt_free", reason: "Healthy income but a heavy EMI load — a repayment strategy (snowball/avalanche) can shorten the path out of debt.", facts: {} };
   } else if (primary?.type === "salary_hike") {
     selection = { journeyId: "first_sip", reason: "Income rose — good moment to start investing.", facts: {} };
   } else if (scores.financialHealth >= 60 && scores.savingsRatePct >= 10) {

@@ -81,6 +81,7 @@ const MODEL: Record<string, { pEngage: number; pPositiveGivenEngage: number; bas
   dormant_revival:  { pEngage: 0.42, pPositiveGivenEngage: 0.46, baseline: 0.07 },
   stress_shield:    { pEngage: 0.62, pPositiveGivenEngage: 0.56, baseline: 0.15 },
   new_baby_nest:    { pEngage: 0.60, pPositiveGivenEngage: 0.50, baseline: 0.12 },
+  debt_free:        { pEngage: 0.55, pPositiveGivenEngage: 0.50, baseline: 0.12 },
 };
 
 interface JourneyAgg {

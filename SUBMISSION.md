@@ -15,8 +15,7 @@
 ### Team details *
 > Fill in your real details; template below.
 
-Harsh Dattani — Independent developer *(add organization / college if applicable)*
-*(add teammates 2–4 here: Name — Organization)*
+Harsh Dattani — Sr. Program Manager, Google
 
 ---
 

@@ -115,6 +115,12 @@ export function generateCustomer(spec: PersonaSpec): Customer {
     push(m, 20, "debit", jitter(3100, 0.2), "groceries", "Local Kirana", "Groceries");
     push(m, 10, "debit", jitter(1800, 0.1), "utilities", "Electricity Board", "Electricity bill");
 
+    // debt persona: healthy income, but two large recurring EMIs
+    if (spec.scenario === "debt") {
+      push(m, 7, "debit", jitter(24000, 0.02), "emi", "SBI Home Loan", "Home loan EMI");
+      push(m, 9, "debit", jitter(9500, 0.02), "emi", "SBI Car Loan", "Car loan EMI");
+    }
+
     // credit-card payment: healthy customers pay in full-ish; stress => minimum
     const ccFull = jitter(9000, 0.25);
     if (inStress) {

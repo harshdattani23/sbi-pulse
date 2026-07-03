@@ -102,10 +102,10 @@ Transactions / behaviours / life events
 src/
   ai/            gemini.ts (LLM client) · reasoner.ts (the reasoning agent)
   engagement/    scores.ts (engagement/health/churn) · cohort.ts (holdout uplift sim)
-  journeys/      orchestrator.ts · definitions.ts (5 journeys) · i18n.ts (hi/or/en)
+  journeys/      orchestrator.ts · definitions.ts (6 journeys) · i18n.ts (hi/or/en)
   governance/    consentGate.ts (deterministic gate) · ledger.ts (audit)
   learn/         bandit.ts (Thompson sampling) · flywheel.ts (outcome feedback loop)
-  data/          generator.ts (seeded synthetic transactions) · personas.ts (8 personas)
+  data/          generator.ts (seeded synthetic transactions) · personas.ts (9 personas)
   server/        server.ts (zero-dep node:http) · pulseApi.ts · engineApi.ts
 web/             index.html · app.js · styles.css · deck.html   (no framework)
 ```
