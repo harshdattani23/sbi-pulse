@@ -12,6 +12,9 @@
 ![Compliance](https://img.shields.io/badge/DPDP%20·%20TRAI-deterministic%20gate-ffc03d)
 ![License](https://img.shields.io/badge/license-hackathon%20prototype-8a93ad)
 
+### 🌐 **[Live demo → sbi-pulse-774217255969.asia-south1.run.app](https://sbi-pulse-774217255969.asia-south1.run.app)**
+*Running on Cloud Run (Mumbai) with live AI reasoning — auto-deployed from this repo via GitHub Actions.*
+
 <img src="docs/journey.jpg" width="900" alt="SBI Pulse — the AI detects Meena's financial stress, suppresses cross-sell, and writes a care message in Hindi, with scores, governance verdict and audit trail" />
 
 *The AI reads Meena's real transaction stream, detects financial stress, **suppresses cross-sell**,<br>and writes a care message — in Hindi. Every step lands on an explainability audit trail.*
