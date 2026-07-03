@@ -518,3 +518,25 @@ body.demo-live .topbar { box-shadow: inset 0 -2px 0 var(--purple); }
 .f-alert { margin-top: 9px; font-size: 12px; color: var(--red); background: rgba(255,93,115,.1);
   border: 1px solid rgba(255,93,115,.3); border-radius: 9px; padding: 8px 11px; }
 .f-alert b { font-variant-numeric: tabular-nums; }
+
+/* ---- agent mesh ----------------------------------------------------------- */
+.mesh { margin: 6px 0 4px; }
+.mesh-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+.mesh-label b { color: var(--teal); }
+.mesh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+@media (max-width: 720px) { .mesh-grid { grid-template-columns: 1fr; } }
+.mesh-agent, .mesh-orch { background: var(--panel); border: 1px solid var(--brd); border-radius: 10px; padding: 9px 11px;
+  opacity: 0; animation: trIn .45s ease forwards; }
+.ma-hd { display: flex; align-items: center; gap: 7px; font-size: 11.5px; }
+.ma-hd b { font-weight: 700; }
+.ma-concern { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-left: auto; }
+.ma-ms { font-family: var(--mono); font-size: 9.5px; color: var(--faint); }
+.ma-headline { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+.mesh-orch { margin-top: 7px; border-width: 1.5px; }
+.mesh-orch.care { border-color: rgba(22,214,200,.5); background: rgba(22,214,200,.07); }
+.mesh-orch.grow { border-color: rgba(61,109,255,.5); background: rgba(61,109,255,.07); }
+.mesh-orch.silent { border-color: rgba(255,255,255,.2); }
+.orch-verdict { margin-left: auto; font-size: 10px; font-weight: 800; letter-spacing: .05em;
+  padding: 2px 8px; border-radius: 7px; background: var(--panel-2); color: var(--brand-2); }
+.mesh-orch.care .orch-verdict { color: var(--teal); }
+.mesh-orch.silent .orch-verdict { color: var(--faint); }

@@ -44,6 +44,7 @@ export async function runAgentTurn(
   history: Content[],
   userText: string | null,
   toneHint?: { label: string; hint: string },
+  brief?: { mode: string; text: string },
 ): Promise<AgentTurnResult> {
   const system = toneHint
     ? SYSTEM + `\n9. LEARNED STYLE: the bank's outcome-trained policy indicates this customer's segment responds best to a "${toneHint.label}" style (${toneHint.hint}). Prefer that style when you write.`
@@ -52,10 +53,10 @@ export async function runAgentTurn(
   session.suppressed = null;
 
   if (userText === null) {
-    history.push({
-      role: "user",
-      parts: [{ text: `New proactive engagement cycle for customer id "${session.customer.id}". Investigate with tools, then decide: engage helpfully, or stay silent.` }],
-    });
+    const bootstrap = brief
+      ? `Engagement brief from the mesh orchestrator (mode: ${brief.mode}) for customer id "${session.customer.id}":\n"${brief.text}"\n\nExecute this engagement now. The analyst mesh has already done the broad analysis — call additional tools only if you need specifics. Then send your opening message via respond_to_customer.`
+      : `New proactive engagement cycle for customer id "${session.customer.id}". Investigate with tools, then decide: engage helpfully, or stay silent.`;
+    history.push({ role: "user", parts: [{ text: bootstrap }] });
   } else {
     history.push({ role: "user", parts: [{ text: `Customer replies: "${userText}"` }] });
   }

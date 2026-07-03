@@ -5,6 +5,7 @@ import { runImpact } from "../engagement/cohort.ts";
 import { computeScores } from "../engagement/scores.ts";
 import { hasGemini, type Content } from "../ai/gemini.ts";
 import { newSession, runAgentTurn, describeAction } from "../ai/agent.ts";
+import { runMesh } from "../ai/mesh.ts";
 import type { AgentSession } from "../ai/tools.ts";
 import { forecast } from "../ml/forecaster.ts";
 import { bestToneForSegment, recordOutcome, flywheelState, train } from "../learn/flywheel.ts";
@@ -112,21 +113,48 @@ async function startWithAI(id: string, spec: ReturnType<typeof getPersona> & {},
   const consentLine = customer.consents.map((c) => `${c.purpose.split("_")[0]} ${c.granted ? "✓" : "✗"}`).join(" · ");
   pushAudit(id, "observe", `Session opened: ${customer.transactions.length} transactions on record; consent: ${consentLine}.`);
 
+  // ---- PHASE 1: the agent mesh — 4 parallel specialists + orchestrator ----
+  const mesh = await runMesh(customer, toCtx(opts));
+  for (const r of mesh.reports) {
+    pushAudit(id, "infer", `${r.emoji} ${r.agent} [concern: ${r.concern}] — ${r.headline}`, r.findings.join(" · "));
+  }
+  pushAudit(id, "decide",
+    `🧠 Orchestrator: ${mesh.decision.engage ? `ENGAGE (${mesh.decision.mode})` : "STAY SILENT"} — 4 specialists ran in parallel (${mesh.parallelMs}ms vs ${mesh.sequentialMs}ms serial).`,
+    mesh.decision.rationale);
+
+  const meshPayload = {
+    reports: mesh.reports,
+    decision: { engage: mesh.decision.engage, mode: mesh.decision.mode, rationale: mesh.decision.rationale },
+    parallelMs: mesh.parallelMs, sequentialMs: mesh.sequentialMs, orchestratorMs: mesh.orchestratorMs,
+  };
+
+  // orchestrator chose silence
+  if (!mesh.decision.engage) {
+    return {
+      ...customerSummaryLite(customer), ai: true, journey: null, mesh: meshPayload,
+      reason: mesh.decision.rationale,
+      scores, delivered: false, trace: [],
+      governance: { verdict: "suppressed", reasons: ["Orchestrator decision: no genuinely helpful reason to reach out."] },
+      audit: getAudit(id),
+    };
+  }
+
+  // ---- PHASE 2: the conversation agent executes the orchestrator's brief ---
   const tone = bestToneForSegment(customer.segment);
   const agent = newSession(customer, toCtx(opts));
   const history: Content[] = [];
-  const turn = await runAgentTurn(agent, history, null, tone);
+  const turn = await runAgentTurn(agent, history, null, tone, { mode: mesh.decision.mode, text: mesh.decision.brief });
   auditAgentActions(id, agent, 0);
   pushAudit(id, "learn", `Learned style hint applied: “${tone.label}” (policy's best for ${customer.segment}).`);
 
   const trace = agent.actions.map((a) => ({ tool: a.tool, label: describeAction(a) }));
 
-  // agent chose silence
+  // conversation agent unexpectedly stayed silent despite the brief
   if (!agent.outbound && !agent.suppressed) {
-    pushAudit(id, "decide", "Agent decided to stay silent.", turn.silentNote ?? "");
+    pushAudit(id, "decide", "Conversation agent declined the brief and stayed silent.", turn.silentNote ?? "");
     return {
-      ...customerSummaryLite(customer), ai: true, journey: null,
-      reason: turn.silentNote ?? "Agent found no helpful reason to engage.",
+      ...customerSummaryLite(customer), ai: true, journey: null, mesh: meshPayload,
+      reason: turn.silentNote ?? "Conversation agent found no helpful way to execute the brief.",
       scores, delivered: false, trace,
       governance: { verdict: "suppressed", reasons: ["Agent decision: no genuinely helpful reason to reach out."] },
       audit: getAudit(id),
@@ -137,7 +165,7 @@ async function startWithAI(id: string, spec: ReturnType<typeof getPersona> & {},
   if (agent.suppressed) {
     aiSessions.delete(id);
     return {
-      ...customerSummaryLite(customer), ai: true, journey: null,
+      ...customerSummaryLite(customer), ai: true, journey: null, mesh: meshPayload,
       reason: "Agent attempted an outbound message; the deterministic gate refused it.",
       scores, delivered: false, trace,
       governance: agent.suppressed.governance, audit: getAudit(id),
@@ -152,9 +180,9 @@ async function startWithAI(id: string, spec: ReturnType<typeof getPersona> & {},
   });
 
   return {
-    ...customerSummaryLite(customer), ai: true,
-    journey: { id: "agentic", name: out.isCare ? "Care conversation" : "Engagement conversation", emoji: out.isCare ? "🛡️" : "✨", goal: "decided live by the agent", isCare: out.isCare },
-    reason: `Agent investigated with ${trace.filter((t) => t.tool.startsWith("get_")).length} tool calls, then chose to engage.`,
+    ...customerSummaryLite(customer), ai: true, mesh: meshPayload,
+    journey: { id: "agentic", name: mesh.decision.mode === "care" ? "Care conversation" : "Growth conversation", emoji: mesh.decision.mode === "care" ? "🛡️" : "✨", goal: "decided by the orchestrator", isCare: out.isCare },
+    reason: mesh.decision.rationale,
     scores, governance: out.governance, delivered: true, trace,
     step: {
       id: "ai", kind: out.isCare ? "care" : "insight", channel: out.isCare ? "yono_card" : "whatsapp",

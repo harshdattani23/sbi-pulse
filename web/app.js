@@ -180,21 +180,49 @@ function renderTrace(trace) {
     `<div class="tr-step" style="animation-delay:${i * 0.35}s"><span class="tr-ic">${TOOL_ICONS[t.tool] || "🔧"}</span>${esc(t.label)}</div>`).join("")}</div>`;
 }
 
+const CONCERN_COLORS = { none: "var(--green)", low: "var(--teal)", medium: "var(--amber)", high: "var(--red)" };
+
+function renderMesh(mesh) {
+  if (!mesh) return "";
+  const rows = mesh.reports.map((r, i) => `
+    <div class="mesh-agent" style="animation-delay:${i * 0.18}s">
+      <div class="ma-hd"><span>${r.emoji}</span><b>${esc(r.agent)}</b>
+        <span class="ma-concern" style="color:${CONCERN_COLORS[r.concern]}">${r.concern}</span>
+        <span class="ma-ms">${r.ms}ms</span></div>
+      <div class="ma-headline">${esc(r.headline)}</div>
+    </div>`).join("");
+  const d = mesh.decision;
+  const speedup = mesh.sequentialMs > 0 ? (mesh.sequentialMs / mesh.parallelMs).toFixed(1) : "1";
+  return `
+    <div class="mesh">
+      <div class="mesh-label">🕸 Agent mesh — 4 specialists, ran in <b>parallel</b>: ${mesh.parallelMs}ms <span class="dim">(vs ${mesh.sequentialMs}ms serial · ${speedup}× faster)</span></div>
+      <div class="mesh-grid">${rows}</div>
+      <div class="mesh-orch ${d.engage ? (d.mode === "care" ? "care" : "grow") : "silent"}" style="animation-delay:${mesh.reports.length * 0.18 + 0.15}s">
+        <div class="ma-hd"><span>🧠</span><b>Orchestrator</b>
+          <span class="orch-verdict">${d.engage ? `ENGAGE · ${d.mode.toUpperCase()}` : "STAY SILENT"}</span></div>
+        <div class="ma-headline">${esc(d.rationale)}</div>
+      </div>
+    </div>`;
+}
+
 function renderWhy(data) {
   const s = data.scores;
   const badge = data.ai
-    ? `<div class="ai-badge">✨ Live ReAct agent · ${(data.trace || []).length} tool calls</div>`
+    ? `<div class="ai-badge">✨ Multi-agent mesh · ${(data.mesh?.reports || []).length} specialists + orchestrator + conversation agent</div>`
     : data.fallbackMode
       ? `<div class="ai-badge fallback">⚙ rule fallback — no AI</div>`
       : "";
   const situation = data.situation ? `<div class="situation">“${esc(data.situation)}”</div>` : "";
-  const trace = data.ai ? renderTrace(data.trace) : "";
+  const mesh = data.ai ? renderMesh(data.mesh) : "";
+  const trace = data.ai && (data.trace || []).length
+    ? `<div class="mesh-label" style="margin-top:12px">💬 Conversation agent</div>` + renderTrace(data.trace)
+    : "";
   const body = data.journey
-    ? `${data.journey.emoji} <strong>${esc(data.journey.name)}</strong> — ${esc(data.reason)}<span class="goal">🎯 ${esc(data.journey.goal)}</span>`
+    ? `${data.journey.emoji} <strong>${esc(data.journey.name)}</strong><span class="goal">🎯 ${esc(data.journey.goal)}</span>`
     : data.ai
-      ? `<div class="situation" style="border-color:var(--faint)">🤖 Agent note: “${esc(data.reason || "stayed silent")}”</div>`
+      ? ""
       : esc(data.reason || "Staying silent.");
-  $("#jr-reason").innerHTML = badge + trace + situation + body;
+  $("#jr-reason").innerHTML = badge + mesh + trace + situation + body;
   loadForecastChart(data.id);
 
   const healthTone = s.financialHealth >= 55 ? "good" : "warn";
