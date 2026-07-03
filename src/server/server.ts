@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join, extname } from "node:path";
 import { listPersonas, runPersona, runFleet, type RunOpts } from "./engineApi.ts";
-import { listCustomers, startForCustomer, replyForCustomer, cockpit, impact, studio, flywheel, type PulseOpts } from "./pulseApi.ts";
+import { listCustomers, startForCustomer, replyForCustomer, cockpit, impact, studio, flywheel, forecastFor, type PulseOpts } from "./pulseApi.ts";
 
 // ---------------------------------------------------------------------------
 // Zero-dependency web server. Serves the static UI from /web and exposes the
@@ -71,6 +71,10 @@ const server = createServer(async (req, res) => {
     if (path === "/api/pulse/cockpit") return json(res, cockpit(pulseOpts));
     if (path === "/api/pulse/impact") return json(res, impact(pulseOpts));
     if (path === "/api/pulse/studio") return json(res, studio());
+    if (path === "/api/pulse/forecast") {
+      const r = forecastFor(url.searchParams.get("id") ?? "");
+      return r ? json(res, r) : json(res, { error: "unknown customer" }, 404);
+    }
     if (path === "/api/pulse/flywheel") return json(res, flywheel(Number(url.searchParams.get("rounds") ?? 0)));
 
     // ---- static ----

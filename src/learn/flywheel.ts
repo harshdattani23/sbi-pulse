@@ -118,12 +118,13 @@ export function flywheelState() {
   };
 }
 
-/** Live product: current best-known tone for a segment (aggregated across journeys). */
+/** Live product: current best-known tone for a segment (aggregated across journeys,
+ *  including the live "agentic" arms fed by real agent outcomes). */
 export function bestToneForSegment(segment: string): { id: string; label: string; hint: string } {
   const seg = (SEGMENTS as string[]).includes(segment) ? (segment as Segment) : "mass_affluent";
   const totals = VARIANTS.map((v) => {
     let sum = 0;
-    for (const j of JOURNEYS) sum += bandit.stat(armKey(j, seg, v.id)).mean;
+    for (const j of [...JOURNEYS, "agentic"]) sum += bandit.stat(armKey(j, seg, v.id)).mean;
     return { v, sum };
   });
   totals.sort((a, b) => b.sum - a.sum);

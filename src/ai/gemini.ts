@@ -69,3 +69,89 @@ export async function generateJSON<T = unknown>(opts: GenOpts): Promise<T> {
 }
 
 export const GEMINI_MODEL = MODEL;
+
+// ---------------------------------------------------------------------------
+// Function calling — the substrate for the ReAct agent loop.
+// ---------------------------------------------------------------------------
+
+export interface FunctionDecl {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>; // JSON schema
+}
+
+export interface Content {
+  role: "user" | "model";
+  parts: Array<Record<string, unknown>>;
+}
+
+export interface ToolCall {
+  name: string;
+  args: Record<string, unknown>;
+}
+
+export interface GenTurn {
+  text: string | null;
+  toolCalls: ToolCall[];
+  /** The raw model content part — append to history before tool responses. */
+  modelContent: Content | null;
+}
+
+/** One model turn: may return text, tool calls, or both. */
+export async function generateWithTools(opts: {
+  system: string;
+  contents: Content[];
+  tools: FunctionDecl[];
+  temperature?: number;
+  maxTokens?: number;
+}): Promise<GenTurn> {
+  if (!KEY) throw new Error("no gemini key");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20_000);
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": KEY },
+      signal: controller.signal,
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: opts.system }] },
+        contents: opts.contents,
+        tools: [{ functionDeclarations: opts.tools }],
+        generationConfig: {
+          temperature: opts.temperature ?? 0.3,
+          maxOutputTokens: opts.maxTokens ?? 900,
+        },
+      }),
+    });
+    if (!res.ok) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const data = (await res.json()) as {
+      candidates?: Array<{ content?: { role?: string; parts?: Array<Record<string, unknown>> } }>;
+      promptFeedback?: { blockReason?: string };
+    };
+    const content = data.candidates?.[0]?.content;
+    if (!content?.parts) throw new Error(`blocked: ${data.promptFeedback?.blockReason ?? "no content"}`);
+
+    const toolCalls: ToolCall[] = [];
+    const texts: string[] = [];
+    for (const p of content.parts) {
+      const fc = p.functionCall as { name: string; args?: Record<string, unknown> } | undefined;
+      if (fc) toolCalls.push({ name: fc.name, args: fc.args ?? {} });
+      else if (typeof p.text === "string") texts.push(p.text);
+    }
+    return {
+      text: texts.length ? texts.join("").trim() : null,
+      toolCalls,
+      modelContent: { role: "model", parts: content.parts },
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Package tool results as the next user turn in the loop. */
+export function toolResponses(results: Array<{ name: string; response: unknown }>): Content {
+  return {
+    role: "user",
+    parts: results.map((r) => ({ functionResponse: { name: r.name, response: { result: r.response } } })),
+  };
+}

@@ -36,7 +36,7 @@ A **nudge** is one message. A **journey** is an adaptive, multi-step conversatio
 | | |
 |---|---|
 | 📡 **Sense** | Life events & pattern shifts from the transaction stream — salary hike, relocation, new baby, overspend, dormancy, financial stress |
-| ✨ **Reason** | A **live LLM agent** reads the actual transactions, infers the situation, and picks the journey — *or decides to stay silent* |
+| ✨ **Reason** | A **ReAct tool-calling agent**: investigates via banking tools (profile, spending, a **trained cash-flow model**), then decides — engage, act, or *stay silent* |
 | 💬 **Engage** | Free-text conversation in the customer's language (**Hindi · Odia · English**), generated fresh — not templates |
 | 🛡️ **Restrain** | On detected stress: **all cross-sell suppressed**, care offered instead. Knowing when *not* to sell is a decision |
 | 🔁 **Learn** | Every outcome trains a Thompson-sampling policy — **using the product improves it** |
@@ -100,8 +100,9 @@ Transactions / behaviours / life events
 
 ```
 src/
-  ai/            gemini.ts (LLM client) · reasoner.ts (the reasoning agent)
-  engagement/    scores.ts (engagement/health/churn) · cohort.ts (holdout uplift sim)
+  ai/            gemini.ts (LLM + function-calling client) · agent.ts (ReAct loop) · tools.ts (9 banking tools; the gate lives INSIDE respond_to_customer)
+  ml/            forecaster.ts (per-customer cash-flow model, holdout-validated)
+  engagement/    scores.ts (analytics features) · cohort.ts (holdout uplift sim)
   journeys/      orchestrator.ts · definitions.ts (6 journeys) · i18n.ts (hi/or/en)
   governance/    consentGate.ts (deterministic gate) · ledger.ts (audit)
   learn/         bandit.ts (Thompson sampling) · flywheel.ts (outcome feedback loop)

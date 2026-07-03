@@ -3,8 +3,10 @@ import { generateCustomer } from "../data/generator.ts";
 import { startJourney, advance, renderStep, selectJourney, JOURNEYS } from "../journeys/orchestrator.ts";
 import { runImpact } from "../engagement/cohort.ts";
 import { computeScores } from "../engagement/scores.ts";
-import { hasGemini } from "../ai/gemini.ts";
-import { reasonEngagement, continueConversation } from "../ai/reasoner.ts";
+import { hasGemini, type Content } from "../ai/gemini.ts";
+import { newSession, runAgentTurn, describeAction } from "../ai/agent.ts";
+import type { AgentSession } from "../ai/tools.ts";
+import { forecast } from "../ml/forecaster.ts";
 import { bestToneForSegment, recordOutcome, flywheelState, train } from "../learn/flywheel.ts";
 import type { JourneySession } from "../journeys/types.ts";
 import { checkContactPolicy, type GateContext } from "../governance/consentGate.ts";
@@ -15,11 +17,11 @@ import { checkContactPolicy, type GateContext } from "../governance/consentGate.
 
 const sessions = new Map<string, JourneySession>();
 
-// AI conversational sessions (Gemini-driven journeys)
+// ReAct agent sessions — the model drives; we hold state + transcript.
 interface AiSession {
-  customerId: string; journeyId: string; goal: string; isCare: boolean; language: string;
-  segment: string; toneId: string; toneLabel: string;
-  history: Array<{ role: "assistant" | "user"; text: string }>;
+  agent: AgentSession;
+  history: Content[];
+  language: string; segment: string; toneId: string; toneLabel: string;
   status: "active" | "completed"; outcome?: string;
 }
 const aiSessions = new Map<string, AiSession>();
@@ -92,50 +94,74 @@ export async function startForCustomer(id: string, opts: PulseOpts = {}) {
   return startDeterministic(id, opts);
 }
 
+/** Map the agent's tool actions into the audit trail. */
+function auditAgentActions(id: string, session: AgentSession, fromSeq: number) {
+  const stageFor = (tool: string) =>
+    tool.startsWith("get_") ? "observe"
+    : tool === "respond_to_customer" ? "gate"
+    : "act";
+  for (const a of session.actions.filter((x) => x.at > fromSeq)) {
+    pushAudit(id, stageFor(a.tool), describeAction(a), JSON.stringify(a.args).slice(0, 140));
+  }
+}
+
 async function startWithAI(id: string, spec: ReturnType<typeof getPersona> & {}, opts: PulseOpts) {
   const customer = generateCustomer(spec);
   resetAudit(id);
   const scores = computeScores(customer);
   const consentLine = customer.consents.map((c) => `${c.purpose.split("_")[0]} ${c.granted ? "✓" : "✗"}`).join(" · ");
-  pushAudit(id, "observe", `Observed ${customer.transactions.length} transactions; consent: ${consentLine}.`);
+  pushAudit(id, "observe", `Session opened: ${customer.transactions.length} transactions on record; consent: ${consentLine}.`);
 
   const tone = bestToneForSegment(customer.segment);
-  const dec = await reasonEngagement(customer, tone);
-  pushAudit(id, "infer", `AI read the data: ${dec.situation}`, `Scores — engagement ${scores.engagement}, health ${scores.financialHealth}, churn ${scores.churnRisk}.`);
+  const agent = newSession(customer, toCtx(opts));
+  const history: Content[] = [];
+  const turn = await runAgentTurn(agent, history, null, tone);
+  auditAgentActions(id, agent, 0);
+  pushAudit(id, "learn", `Learned style hint applied: “${tone.label}” (policy's best for ${customer.segment}).`);
 
-  const def = JOURNEYS[dec.journeyId];
-  if (dec.journeyId === "none" || !def) {
-    pushAudit(id, "decide", "Agent chose to stay silent — no confident, helpful reason to engage.", dec.reasoning);
+  const trace = agent.actions.map((a) => ({ tool: a.tool, label: describeAction(a) }));
+
+  // agent chose silence
+  if (!agent.outbound && !agent.suppressed) {
+    pushAudit(id, "decide", "Agent decided to stay silent.", turn.silentNote ?? "");
     return {
-      ...customerSummaryLite(customer), ai: true, journey: null, situation: dec.situation,
-      reason: dec.reasoning, scores, delivered: false,
-      governance: { verdict: "suppressed", reasons: ["Agent judged there was no helpful reason to reach out."] },
+      ...customerSummaryLite(customer), ai: true, journey: null,
+      reason: turn.silentNote ?? "Agent found no helpful reason to engage.",
+      scores, delivered: false, trace,
+      governance: { verdict: "suppressed", reasons: ["Agent decision: no genuinely helpful reason to reach out."] },
       audit: getAudit(id),
     };
   }
 
-  pushAudit(id, "decide", `AI chose “${def.name}” (confidence ${Math.round(dec.confidence * 100)}%).`, dec.reasoning);
-  pushAudit(id, "learn", `Applied learned tone “${tone.label}” — the policy's current best for the ${customer.segment} segment.`);
-  const governance = checkContactPolicy(customer, { isCare: !!def.isCare, ctx: toCtx(opts) });
-  const delivered = governance.verdict === "approved";
-  pushAudit(id, "gate", `Governance: ${governance.verdict}.`, governance.reasons.join(" · "));
-  pushAudit(id, "deliver", delivered ? `Delivered AI-written message in ${customer.preferredLanguage}.` : "No outbound — insight retained in-app only.");
+  // gate blocked the outbound (the tool itself refused)
+  if (agent.suppressed) {
+    aiSessions.delete(id);
+    return {
+      ...customerSummaryLite(customer), ai: true, journey: null,
+      reason: "Agent attempted an outbound message; the deterministic gate refused it.",
+      scores, delivered: false, trace,
+      governance: agent.suppressed.governance, audit: getAudit(id),
+    };
+  }
 
+  const out = agent.outbound!;
+  pushAudit(id, "deliver", `Delivered agent message in ${customer.preferredLanguage} (${out.isCare ? "care" : "engagement"}).`);
   aiSessions.set(id, {
-    customerId: id, journeyId: def.id, goal: def.goal, isCare: !!def.isCare, language: customer.preferredLanguage,
-    segment: customer.segment, toneId: tone.id, toneLabel: tone.label,
-    history: delivered ? [{ role: "assistant", text: dec.message }] : [], status: "active",
+    agent, history, language: customer.preferredLanguage, segment: customer.segment,
+    toneId: tone.id, toneLabel: tone.label, status: out.complete ? "completed" : "active",
   });
 
   return {
-    ...customerSummaryLite(customer), ai: true, journey: journeyMeta(def.id), situation: dec.situation,
-    reason: dec.reasoning, scores, governance, delivered,
+    ...customerSummaryLite(customer), ai: true,
+    journey: { id: "agentic", name: out.isCare ? "Care conversation" : "Engagement conversation", emoji: out.isCare ? "🛡️" : "✨", goal: "decided live by the agent", isCare: out.isCare },
+    reason: `Agent investigated with ${trace.filter((t) => t.tool.startsWith("get_")).length} tool calls, then chose to engage.`,
+    scores, governance: out.governance, delivered: true, trace,
     step: {
-      id: "ai", kind: def.isCare ? "care" : "insight", channel: def.isCare ? "yono_card" : "whatsapp",
-      language: customer.preferredLanguage, title: dec.title, body: dec.message,
-      options: dec.quickReplies.map((q) => ({ label: q, choice: q })), terminal: false,
+      id: "ai", kind: out.isCare ? "care" : "insight", channel: out.isCare ? "yono_card" : "whatsapp",
+      language: customer.preferredLanguage, title: out.title, body: out.message,
+      options: out.quickReplies.map((q) => ({ label: q, choice: q })), terminal: out.complete,
     },
-    status: "active", audit: getAudit(id),
+    status: out.complete ? "completed" : "active", audit: getAudit(id),
   };
 }
 
@@ -174,7 +200,26 @@ function startDeterministic(id: string, opts: PulseOpts = {}) {
     step: renderStep(stepDef, customer, res.session.facts, res.def.id),
     status: res.session.status,
     ai: false,
+    fallbackMode: true, // rule engine — never presented as AI
     audit: getAudit(id),
+  };
+}
+
+/** Forecast payload for the chart (real model output incl. validation). */
+export function forecastFor(id: string) {
+  const spec = getPersona(id);
+  if (!spec) return null;
+  const customer = generateCustomer(spec);
+  if (customer.transactions.length < 20) return { available: false };
+  const f = forecast(customer);
+  return {
+    available: true,
+    history: f.history.filter((_, i) => i % 2 === 0),
+    projected: f.projected,
+    validation: f.validation,
+    minProjected: f.minProjected,
+    lowBalanceEvent: f.lowBalanceEvent,
+    driftPerDay: f.driftPerDay,
   };
 }
 
@@ -196,39 +241,48 @@ export async function replyForCustomer(id: string, input: string) {
 }
 
 async function replyWithAI(id: string, session: AiSession, userText: string) {
-  const customer = generateCustomer(getPersona(id)!);
   pushAudit(id, "reply", `Customer: “${userText}”.`);
+  const before = session.agent.seq;
   try {
-    const turn = await continueConversation(customer, session.goal, session.isCare, session.history, userText);
-    session.history.push({ role: "user", text: userText });
-    session.history.push({ role: "assistant", text: turn.message });
+    const turn = await runAgentTurn(session.agent, session.history, userText);
+    auditAgentActions(id, session.agent, before);
+
+    const out = session.agent.outbound;
+    const isCare = out?.isCare ?? true;
+    const trace = session.agent.actions.filter((a) => a.at > before).map((a) => ({ tool: a.tool, label: describeAction(a) }));
+
+    if (!out) {
+      // gate refusal mid-conversation or silence — close gracefully
+      session.status = "completed"; session.outcome = "declined";
+      return { ai: true, trace, step: null, status: "completed", outcome: "declined", reward: { kind: "soft" }, audit: getAudit(id) };
+    }
 
     let reward: null | { kind: "positive" | "rm" | "soft"; outcome?: string } = null;
-    if (turn.complete && turn.outcome !== "ongoing") {
-      session.status = "completed"; session.outcome = turn.outcome;
-      reward = turn.outcome === "positive" ? { kind: "positive", outcome: turn.outcome }
-        : turn.outcome === "rm_handoff" ? { kind: "rm", outcome: turn.outcome }
-        : { kind: "soft", outcome: turn.outcome };
-      pushAudit(id, "complete", `Journey completed — outcome: ${turn.outcome}.`);
-      // FLYWHEEL: fold this real outcome back into the learning policy
-      const rewardBit: 0 | 1 = turn.outcome === "positive" ? 1 : 0;
-      recordOutcome(session.journeyId, session.segment, session.toneId, rewardBit);
-      pushAudit(id, "learn", `Outcome fed back to policy — “${session.toneLabel}” tone, reward ${rewardBit}. The bandit posterior updated; this makes the next decision smarter.`);
+    if (out.complete && out.outcome !== "ongoing") {
+      session.status = "completed"; session.outcome = out.outcome;
+      reward = out.outcome === "positive" ? { kind: "positive", outcome: out.outcome }
+        : out.outcome === "rm_handoff" ? { kind: "rm", outcome: out.outcome }
+        : { kind: "soft", outcome: out.outcome };
+      pushAudit(id, "complete", `Conversation completed — outcome: ${out.outcome}.`);
+      // FLYWHEEL: real outcome → policy
+      const rewardBit: 0 | 1 = out.outcome === "positive" ? 1 : 0;
+      recordOutcome("agentic", session.segment, session.toneId, rewardBit);
+      pushAudit(id, "learn", `Outcome fed back to policy — “${session.toneLabel}” style, reward ${rewardBit}. Posterior updated.`);
     }
 
     return {
-      ai: true,
+      ai: true, trace,
       step: {
-        id: "ai", kind: session.isCare ? "care" : (turn.complete ? "celebrate" : "insight"),
-        channel: session.isCare ? "yono_card" : "whatsapp", language: session.language,
-        title: turn.title ?? "", body: turn.message,
-        options: turn.complete ? [] : turn.quickReplies.map((q) => ({ label: q, choice: q })),
-        terminal: turn.complete,
+        id: "ai", kind: isCare ? "care" : (out.complete && out.outcome === "positive" ? "celebrate" : "insight"),
+        channel: isCare ? "yono_card" : "whatsapp", language: session.language,
+        title: out.title, body: out.message,
+        options: out.complete ? [] : out.quickReplies.map((q) => ({ label: q, choice: q })),
+        terminal: out.complete,
       },
       status: session.status, outcome: session.outcome ?? null, reward, audit: getAudit(id),
     };
   } catch (e) {
-    pushAudit(id, "warn", `AI turn failed (${String(e).slice(0, 50)}).`);
+    pushAudit(id, "warn", `Agent turn failed (${String(e).slice(0, 50)}).`);
     return { ai: true, step: { id: "ai", kind: "close", channel: "whatsapp", language: session.language, title: "", body: "Thanks — I'll follow up shortly.", options: [], terminal: true }, status: "completed", reward: { kind: "soft" }, audit: getAudit(id) };
   }
 }

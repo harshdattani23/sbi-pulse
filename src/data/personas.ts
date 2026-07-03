@@ -23,7 +23,7 @@ export interface PersonaSpec {
   baselineRent: number; // monthly rent debit (0 if owns home)
   openingBalance: number;
   /** The scripted life event / behavioural pattern this persona is living through. */
-  scenario: LifeEventType | "overspend" | "dormant" | "debt" | "none";
+  scenario: LifeEventType | "overspend" | "dormant" | "debt" | "tight" | "none";
   /** Free-form scenario knobs read by the generator. */
   scenarioParams?: Record<string, string | number>;
   consents: ConsentRecord[];
@@ -143,6 +143,21 @@ export const PERSONAS: PersonaSpec[] = [
     openingBalance: 70000,
     // Income is fine; discretionary spend keeps climbing → Overspend Rescue journey.
     scenario: "overspend",
+    consents: fullConsent(),
+  },
+  {
+    id: "priya",
+    name: "Priya Nair",
+    age: 27,
+    homeCity: "Kochi",
+    language: "en",
+    segment: "mass",
+    baselineIncome: 32000,
+    baselineRent: 12000,
+    openingBalance: 46000,
+    // Outflows slightly exceed income → balance grinds down; the forecaster
+    // should predict the low-balance crossing BEFORE it happens (the Erica moment).
+    scenario: "tight",
     consents: fullConsent(),
   },
   {

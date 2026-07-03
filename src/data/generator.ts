@@ -115,6 +115,12 @@ export function generateCustomer(spec: PersonaSpec): Customer {
     push(m, 20, "debit", jitter(3100, 0.2), "groceries", "Local Kirana", "Groceries");
     push(m, 10, "debit", jitter(1800, 0.1), "utilities", "Electricity Board", "Electricity bill");
 
+    // tight persona: modest income, outflows slightly exceed it → slow grind down
+    if (spec.scenario === "tight") {
+      push(m, 11, "debit", jitter(5200, 0.12), "emi", "Bike Loan EMI", "Two-wheeler EMI");
+      push(m, 24, "debit", jitter(3600, 0.18), "misc", "Family Support Transfer", "Transfer home");
+    }
+
     // debt persona: healthy income, but two large recurring EMIs
     if (spec.scenario === "debt") {
       push(m, 7, "debit", jitter(24000, 0.02), "emi", "SBI Home Loan", "Home loan EMI");

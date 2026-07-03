@@ -172,14 +172,30 @@ function renderHeader(data) {
   $("#phone-acct").textContent = `•••• ${1000 + (data.name.length * 137) % 9000} · Savings`;
 }
 
+const TOOL_ICONS = { get_customer_profile: "👤", get_spending_breakdown: "📊", get_cashflow_forecast: "📈", get_engagement_analytics: "🧮", create_sip: "✅", set_spend_cap: "🎯", schedule_reminder: "⏰", escalate_to_rm: "🧑‍💼", respond_to_customer: "🛡️" };
+
+function renderTrace(trace) {
+  if (!trace || !trace.length) return "";
+  return `<div class="agent-trace">${trace.map((t, i) =>
+    `<div class="tr-step" style="animation-delay:${i * 0.35}s"><span class="tr-ic">${TOOL_ICONS[t.tool] || "🔧"}</span>${esc(t.label)}</div>`).join("")}</div>`;
+}
+
 function renderWhy(data) {
   const s = data.scores;
-  const badge = data.ai ? `<div class="ai-badge">✨ Reasoned by AI · live agent</div>` : "";
+  const badge = data.ai
+    ? `<div class="ai-badge">✨ Live ReAct agent · ${(data.trace || []).length} tool calls</div>`
+    : data.fallbackMode
+      ? `<div class="ai-badge fallback">⚙ rule fallback — no AI</div>`
+      : "";
   const situation = data.situation ? `<div class="situation">“${esc(data.situation)}”</div>` : "";
+  const trace = data.ai ? renderTrace(data.trace) : "";
   const body = data.journey
     ? `${data.journey.emoji} <strong>${esc(data.journey.name)}</strong> — ${esc(data.reason)}<span class="goal">🎯 ${esc(data.journey.goal)}</span>`
-    : esc(data.reason || "Staying silent.");
-  $("#jr-reason").innerHTML = badge + situation + body;
+    : data.ai
+      ? `<div class="situation" style="border-color:var(--faint)">🤖 Agent note: “${esc(data.reason || "stayed silent")}”</div>`
+      : esc(data.reason || "Staying silent.");
+  $("#jr-reason").innerHTML = badge + trace + situation + body;
+  loadForecastChart(data.id);
 
   const healthTone = s.financialHealth >= 55 ? "good" : "warn";
   $("#scores").innerHTML = `
@@ -194,6 +210,41 @@ function renderWhy(data) {
   const label = data.delivered ? "Delivered" : "Suppressed";
   $("#governance").innerHTML = `<span class="verdict ${v}">${label}</span>
     <ul class="reasons">${(g?.reasons || []).map((r) => `<li class="${/suppress|not granted|outside|cap reached/i.test(r) ? "block" : ""}">${esc(r)}</li>`).join("")}</ul>`;
+}
+
+// ---------------------------------------------------------------------------
+// Cash-flow forecast chart (real model output, incl. its own validation)
+// ---------------------------------------------------------------------------
+async function loadForecastChart(id) {
+  const host = $("#forecast");
+  if (!host) return;
+  host.innerHTML = "";
+  let f;
+  try { f = await (await fetch(`/api/pulse/forecast?id=${id}`)).json(); } catch { return; }
+  if (!f || !f.available) { host.innerHTML = `<div class="dim" style="font-size:11.5px">Not enough history for a forecast.</div>`; return; }
+
+  const pts = [...f.history.map((p) => ({ x: p.day, y: p.balance, proj: false })),
+               ...f.projected.map((p) => ({ x: p.day, y: p.balance, proj: true }))];
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  const xmin = Math.min(...xs), xmax = Math.max(...xs);
+  const ymin = Math.min(...ys, 0), ymax = Math.max(...ys) * 1.05;
+  const W = 360, H = 120, P = 6;
+  const X = (x) => P + ((x - xmin) / (xmax - xmin)) * (W - 2 * P);
+  const Y = (y) => H - P - ((y - ymin) / (ymax - ymin)) * (H - 2 * P);
+  const line = (arr, cls, dash) => `<polyline points="${arr.map((p) => `${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join(" ")}" fill="none" class="${cls}" ${dash ? `stroke-dasharray="4 4"` : ""}/>`;
+  const hist = pts.filter((p) => !p.proj), proj = pts.filter((p) => p.proj);
+  if (hist.length) proj.unshift(hist[hist.length - 1]);
+  const zeroLine = ymin < 0 ? `<line x1="${P}" x2="${W - P}" y1="${Y(0)}" y2="${Y(0)}" class="f-zero"/>` : "";
+  const low = f.lowBalanceEvent
+    ? `<circle cx="${X(f.lowBalanceEvent.inDays)}" cy="${Y(f.lowBalanceEvent.balance)}" r="4" class="f-low"/>` : "";
+  const skillCls = f.validation.skill >= 20 ? "ok" : "bad";
+  host.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="f-svg">${zeroLine}${line(hist, "f-hist")}${line(proj, "f-proj", true)}${low}</svg>
+    <div class="f-meta">
+      <span>solid = observed · dashed = <b>model projection (30d)</b></span>
+      <span class="f-skill ${skillCls}">holdout skill ${f.validation.skill}% vs naive</span>
+    </div>
+    ${f.lowBalanceEvent ? `<div class="f-alert">⚠ model predicts balance below ₹${f.lowBalanceEvent.threshold.toLocaleString("en-IN")} in <b>${f.lowBalanceEvent.inDays} days</b></div>` : ""}`;
 }
 
 function scoreRow(label, v, tone, sub) {
