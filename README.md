@@ -15,9 +15,9 @@
 ### 🌐 **[Live demo → sbi-pulse-774217255969.asia-south1.run.app](https://sbi-pulse-774217255969.asia-south1.run.app)**
 *Running on Cloud Run (Mumbai) with live AI reasoning — auto-deployed from this repo via GitHub Actions.*
 
-<img src="docs/journey.jpg" width="900" alt="SBI Pulse — the AI detects Meena's financial stress, suppresses cross-sell, and writes a care message in Hindi, with scores, governance verdict and audit trail" />
+<img src="docs/mesh.jpg" width="900" alt="SBI Pulse — 4 specialist agents run in parallel, the orchestrator rules ENGAGE-CARE, and the conversation agent delivers a gated care message" />
 
-*The AI reads Meena's real transaction stream, detects financial stress, **suppresses cross-sell**,<br>and writes a care message — in Hindi. Every step lands on an explainability audit trail.*
+*Four specialist agents investigate in parallel (timings on screen), the orchestrator rules ENGAGE·CARE,<br>and the conversation agent delivers a gated care message. Every step lands on the audit trail.*
 
 </div>
 
@@ -31,13 +31,13 @@ SBI has ~100M digital users — but **34% of new accounts go dormant within a ye
 
 ## The answer: stop sending nudges. Run journeys.
 
-A **nudge** is one message. A **journey** is an adaptive, multi-step conversation the agent runs over time, branching on every reply. Pulse is an **orchestrated multi-agent pipeline** — a signal engine, an LLM reasoning agent, a deterministic governance gate, a conversational orchestrator, and a learning policy, each with a single job:
+A **nudge** is one message. A **journey** is an adaptive, multi-step conversation the agent runs over time, branching on every reply. Pulse is a **multi-agent mesh**: four specialist LLM agents investigate every customer **in parallel** (~2.2s vs ~8.4s serial), an LLM orchestrator weighs their reports and decides, and a ReAct conversation agent executes — behind a deterministic governance gate and in front of a learning policy:
 
 | | |
 |---|---|
-| 📡 **Sense** | Life events & pattern shifts from the transaction stream — salary hike, relocation, new baby, overspend, dormancy, financial stress |
-| ✨ **Reason** | A **ReAct tool-calling agent**: investigates via banking tools (profile, spending, a **trained cash-flow model**), then decides — engage, act, or *stay silent* |
-| 💬 **Engage** | Free-text conversation in the customer's language (**Hindi · Odia · English**), generated fresh — not templates |
+| 📡 **Sense** | 4 parallel specialist agents — Spending, Cash-flow, Risk & Consent, Product-Fit — each with its own role-restricted tools |
+| ✨ **Decide** | An **LLM orchestrator** synthesizes the four reports and rules: engage-care, engage-growth, or **stay silent** (a first-class decision) |
+| 💬 **Engage** | A **ReAct conversation agent**: free-text chat in **Hindi · Odia · English**, and real banking actions on agreement (spend cap, SIP, reminder, RM) |
 | 🛡️ **Restrain** | On detected stress: **all cross-sell suppressed**, care offered instead. Knowing when *not* to sell is a decision |
 | 🔁 **Learn** | Every outcome trains a Thompson-sampling policy — **using the product improves it** |
 
@@ -52,7 +52,7 @@ npm run web                               # → http://localhost:5173
 No key? It still runs — a deterministic rule engine takes over (the ✨ AI badge just won't show).
 
 ```bash
-npm run demo        # CLI demo: full reasoning trace for all 8 personas
+npm run demo        # CLI demo: rule-engine trace for all 10 personas
 ```
 
 ## 🖥️ Five surfaces, one brain
@@ -75,22 +75,28 @@ npm run demo        # CLI demo: full reasoning trace for all 8 personas
 ```
 Transactions / behaviours / life events
         │
-        ▼
-┌─────────────────────┐   ┌──────────────────────────┐   ┌─────────────────────────┐
-│ SIGNAL & SCORING     │ → │ AI REASONING AGENT (LLM)  │ → │ GOVERNANCE GATE          │
-│ engagement · health  │   │ reads real transactions,  │   │ deterministic CODE, not  │
-│ churn · dormancy     │   │ infers situation, chooses │   │ AI: DPDP consent · TRAI  │
-└─────────────────────┘   │ journey or SILENCE,       │   │ 9–9 window · freq caps · │
-                          │ writes vernacular message │   │ stress→care · human-in-  │
-                          └──────────────────────────┘   │ loop for high value      │
-                                                          └────────────┬────────────┘
-                                                                       ▼
-┌──────────────────────────┐   ┌───────────────────────┐   ┌─────────────────────────┐
-│ LEARN                     │ ← │ CONVERSE               │ ← │ DELIVER                  │
-│ outcome → Thompson-       │   │ free-text, branches    │   │ YONO card / WhatsApp,    │
-│ sampling policy; uplift   │   │ on every reply         │   │ customer's own language  │
-│ vs randomised holdout     │   └───────────────────────┘   └─────────────────────────┘
-└──────────────────────────┘
+        ▼  TRUE parallel fan-out (Promise.all) — ~2.2s wall-clock vs ~8.4s serial
+┌────────────────┐ ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
+│ 🧾 SPENDING     │ │ 📈 CASH-FLOW    │ │ ⚖️ RISK &        │ │ 🎯 PRODUCT-FIT  │
+│ ANALYST         │ │ ANALYST runs a  │ │ CONSENT ANALYST │ │ ANALYST         │
+│ trends · creep  │ │ TRAINED model + │ │ churn · consent │ │ what would      │
+│                 │ │ its confidence  │ │ posture         │ │ genuinely help  │
+└───────┬────────┘ └───────┬────────┘ └───────┬────────┘ └───────┬────────┘
+        └───────────────┬──┴──────────────────┴──────────────────┘
+                        ▼  4 structured reports
+            ┌───────────────────────────┐
+            │ 🧠 ORCHESTRATOR (LLM)      │  decides: care · growth · or SILENCE
+            └────────────┬──────────────┘
+                         ▼  written brief
+            ┌───────────────────────────┐   ┌──────────────────────────────┐
+            │ 💬 CONVERSATION AGENT      │ → │ 🛡️ GATE — deterministic code   │
+            │ ReAct loop · 9 banking     │   │ INSIDE respond_to_customer:   │
+            │ action tools · vernacular  │   │ DPDP · TRAI 9–9 · caps        │
+            └───────────────────────────┘   └──────────────┬───────────────┘
+                                                            ▼
+            ┌───────────────────────────┐   every outcome → 🔁 THOMPSON-SAMPLING
+            │ DELIVER (YONO / WhatsApp)  │   POLICY · uplift vs randomised holdout
+            └───────────────────────────┘
         every step → append-only EXPLAINABILITY AUDIT TRAIL
 ```
 
@@ -100,18 +106,18 @@ Transactions / behaviours / life events
 
 ```
 src/
-  ai/            gemini.ts (LLM + function-calling client) · agent.ts (ReAct loop) · tools.ts (9 banking tools; the gate lives INSIDE respond_to_customer)
+  ai/            gemini.ts (LLM + function-calling client) · mesh.ts (4 parallel specialists + orchestrator) · agent.ts (ReAct loop) · tools.ts (9 banking tools; the gate lives INSIDE respond_to_customer)
   ml/            forecaster.ts (per-customer cash-flow model, holdout-validated)
   engagement/    scores.ts (analytics features) · cohort.ts (holdout uplift sim)
   journeys/      orchestrator.ts · definitions.ts (6 journeys) · i18n.ts (hi/or/en)
   governance/    consentGate.ts (deterministic gate) · ledger.ts (audit)
   learn/         bandit.ts (Thompson sampling) · flywheel.ts (outcome feedback loop)
-  data/          generator.ts (seeded synthetic transactions) · personas.ts (9 personas)
+  data/          generator.ts (seeded synthetic transactions) · personas.ts (10 personas)
   server/        server.ts (zero-dep node:http) · pulseApi.ts · engineApi.ts
 web/             index.html · app.js · styles.css · deck.html   (no framework)
 ```
 
-**~4,900 lines · 28 files · 0 npm dependencies · 1 command**
+**~5,700 lines · 33 files · 0 npm dependencies · 1 command**
 
 ## ☁️ Deploy (Cloud Run)
 
